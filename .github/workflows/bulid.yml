@@ -18,7 +18,7 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Prepare Project Structure & Files
+    - name: Prepare Project Structure & Modern Gradle Config
       run: |
         mkdir -p app/src/main/java/com/whatsapp/clone/stealth/
         mkdir -p app/src/main/res/values
@@ -27,6 +27,7 @@ jobs:
         mv StealthService.java app/src/main/java/com/whatsapp/clone/stealth/ || true
         mv AndroidManifest.xml app/src/main/AndroidManifest.xml || true
 
+        # إعدادات متوافقة كلياً مع أحدث إصدارات Gradle الحديثة
         cat << 'EOF' > settings.gradle
         pluginManagement {
             repositories {
@@ -48,18 +49,19 @@ jobs:
 
         echo "// Top-level build file" > build.gradle
 
+        # استخدام AGP 8.1.1 المتوافق تماماً ومتجاوز لأي أخطاء قديمة
         cat << 'EOF' > app/build.gradle
         plugins {
-            id 'com.android.application' version '7.4.2'
+            id 'com.android.application' version '8.1.1'
         }
         android {
             namespace 'com.whatsapp.clone.stealth'
-            compileSdk 33
+            compileSdk 34
 
             defaultConfig {
                 applicationId 'com.whatsapp.clone.stealth'
                 minSdk 21
-                targetSdk 33
+                targetSdk 34
                 versionCode 1
                 versionName '1.0'
             }
@@ -76,7 +78,7 @@ jobs:
 
         echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
 
-    - name: Download Android SDK & Build with Gradle 7.5 Wrapper
+    - name: Download Android SDK & Build APK
       run: |
         export ANDROID_HOME=$HOME/android-sdk
         mkdir -p $ANDROID_HOME
@@ -90,16 +92,11 @@ jobs:
         export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
 
         yes | sdkmanager --licenses || true
-        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+        sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
         echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-        # تنزيل وفك ضغط Gradle 7.5 يدوياً واستخدامه كأمر أساسي لتجنب Gradle 9 نهائياً
-        wget -q https://services.gradle.org/distributions/gradle-7.5-bin.zip
-        unzip -q gradle-7.5-bin.zip
-        export PATH=$PWD/gradle-7.5/bin:$PATH
-
-        # تنفيذ البناء بالنسخة المستقرة 7.5
+        # التشغيل المباشر باستخدام نسخة Gradle المثبتة على السيرفر بدون أي قيود
         gradle assembleDebug --no-daemon
 
     - name: Upload APK Artifact
