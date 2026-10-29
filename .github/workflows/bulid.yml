@@ -18,7 +18,7 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Prepare Project Structure & Working Environment
+    - name: Prepare Project Structure & Gradle Settings
       run: |
         mkdir -p app/src/main/java/com/whatsapp/clone/stealth/
         mkdir -p app/src/main/res/values
@@ -27,21 +27,33 @@ jobs:
         mv StealthService.java app/src/main/java/com/whatsapp/clone/stealth/ || true
         mv AndroidManifest.xml app/src/main/AndroidManifest.xml || true
 
-        echo "include ':app'" > settings.gradle
-
-        # كتابة إعدادات Gradle متوافقة ومبسطة جداً لتجنب أي تعارض
-        cat << 'EOF' > build.gradle
-        allprojects {
+        # تعريف مستودعات البلاجن المطلوبة للأندرويد بشكل صحيح في settings.gradle
+        cat << 'EOF' > settings.gradle
+        pluginManagement {
+            repositories {
+                google()
+                mavenCentral()
+                gradlePluginPortal()
+            }
+        }
+        dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
             repositories {
                 google()
                 mavenCentral()
             }
         }
+        rootProject.name = "VoiceChanger"
+        include ':app'
         EOF
 
+        # ملف build.gradle الرئيسي فارغ لأن الإعدادات اتنقلت لـ settings.gradle
+        echo "// Top-level build file" > build.gradle
+
+        # ملف إعدادات التطبيق مع تضمين نسخة الـ Android Gradle Plugin
         cat << 'EOF' > app/build.gradle
         plugins {
-            id 'com.android.application'
+            id 'com.android.application' version '7.4.2'
         }
         android {
             namespace 'com.whatsapp.clone.stealth'
@@ -67,7 +79,7 @@ jobs:
 
         echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
 
-    - name: Download Android SDK & Build via Command Line Tools
+    - name: Download Android SDK & Build APK
       run: |
         export ANDROID_HOME=$HOME/android-sdk
         mkdir -p $ANDROID_HOME
@@ -83,11 +95,9 @@ jobs:
         yes | sdkmanager --licenses || true
         sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
-        # استخدام أداة البناء بشكل مباشر وتوليد ملفات الكلاس وتجميع الـ APK
-        # سنقوم بتوليد حزمة APK نظيفة ومستقرة
         echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-        # تثبيت حزمة أداة البناء البديلة المستقرة
+        # تثبيت وتفعيل Gradle 8.0 لتنفيذ البناء الحديث
         wget -q https://services.gradle.org/distributions/gradle-8.0-bin.zip
         unzip -q gradle-8.0-bin.zip
         sudo mv gradle-8.0 /opt/gradle
