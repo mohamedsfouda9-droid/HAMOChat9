@@ -24,7 +24,6 @@ jobs:
         mkdir -p app/src/main/res/values
         mkdir -p app/src/main/res/mipmap-mdpi
         
-        # إنشاء صورة أيقونة وهمية بصيغة PNG أو XML لتفادي خطأ الموارد المفقودة تماماً
         echo '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#10B981" android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z"/></vector>' > app/src/main/res/mipmap-mdpi/ic_launcher.xml
         echo '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#10B981" android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z"/></vector>' > app/src/main/res/mipmap-mdpi/ic_launcher_round.xml
 
@@ -80,11 +79,9 @@ jobs:
 
         echo '<resources><string name="app_name">Voice Changer</string><style name="AppTheme" parent="android:Theme.Light.NoTitleBar"><item name="android:windowBackground">#091F14</item></style></resources>' > app/src/main/res/values/styles.xml
 
-        # تعديل المانيفست تلقائياً لاستخدام الأيقونة والستيم الجديدين وتجنب أي خطأ
         sed -i 's|android:theme="@style/Theme.AppCompat.Light.DarkActionBar"|android:theme="@style/AppTheme"|g' app/src/main/AndroidManifest.xml || true
-        sed -i 's|android:icon="@mipmap/ic_launcher"|android:icon="@mipmap/ic_launcher"|g' app/src/main/AndroidManifest.xml || true
 
-    - name: Download Android SDK & Build APK
+    - name: Download Android SDK & Build APK with Info
       run: |
         export ANDROID_HOME=$HOME/android-sdk
         mkdir -p $ANDROID_HOME
@@ -105,7 +102,8 @@ jobs:
         wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
         unzip -q gradle-8.2-bin.zip
 
-        ./gradle-8.2/bin/gradle assembleDebug --no-daemon
+        # إضافة --info و --stacktrace لإظهار تفاصيل أخطاء الجافا الـ 21 بدقة في السجل
+        ./gradle-8.2/bin/gradle assembleDebug --info --stacktrace --no-daemon
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
