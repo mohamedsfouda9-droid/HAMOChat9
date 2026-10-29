@@ -18,7 +18,15 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Create Gradle Project Structure & Wrapper
+    - name: Download & Setup Stable Gradle 7.5
+      run: |
+        # تحميل وتثبيت Gradle 7.5 بشكل مباشر وتجاوز أي إصدار افتراضي
+        wget -q https://services.gradle.org/distributions/gradle-7.5-bin.zip
+        unzip -q gradle-7.5-bin.zip
+        sudo mv gradle-7.5 /opt/gradle
+        echo "/opt/gradle/bin" >> $GITHUB_PATH
+
+    - name: Create Gradle Project Structure
       run: |
         mkdir -p app/src/main/java/com/whatsapp/clone/stealth/
         mkdir -p app/src/main/res/values
@@ -71,9 +79,6 @@ jobs:
 
         echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
 
-        # توليد ملفات الـ wrapper بإصدار متوافق وثابت تماماً (7.5) لتجنب Gradle 9 نهائياً
-        gradle wrapper --gradle-version 7.5
-
     - name: Download Android SDK & Build APK
       run: |
         export ANDROID_HOME=$HOME/android-sdk
@@ -92,9 +97,8 @@ jobs:
 
         echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-        # استخدام ملف الـ wrapper الناتج لتشغيل البناء بالإصدار السليم
-        chmod +x gradlew
-        ./gradlew assembleDebug --no-daemon
+        # تنفيذ البناء باستخدام أمر gradle النسخة 7.5 مباشرة
+        gradle assembleDebug --no-daemon
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
