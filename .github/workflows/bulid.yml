@@ -30,6 +30,13 @@ jobs:
         echo "rootProject.name='VoiceChanger'
         include ':app'" > settings.gradle
 
+        echo "allprojects {
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }" > build.gradle
+
         echo "buildscript {
             repositories {
                 google()
@@ -38,13 +45,7 @@ jobs:
             dependencies {
                 classpath 'com.android.tools.build:gradle:7.4.2'
             }
-        }
-        allprojects {
-            repositories {
-                google()
-                mavenCentral()
-            }
-        }" > build.gradle
+        }" >> build.gradle
 
         echo "plugins {
             id 'com.android.application'
@@ -68,12 +69,30 @@ jobs:
 
         echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
 
-        # تثبيت إصدار جراجل المتوافق 7.4.2 حصرياً لتجنب الأخطاء
-        gradle wrapper --gradle-version 7.4.2
-
-    - name: Build APK with Gradle
+    - name: Download Android SDK Command Line Tools & Build
       run: |
-        ./gradlew assembleDebug
+        # تثبيت حزم أدوات البناء الرسمية واستخدام أداة البناء بشكل مباشر
+        export ANDROID_HOME=$HOME/android-sdk
+        mkdir -p $ANDROID_HOME
+        
+        # تحميل واستخراج Command Line Tools
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdtools.zip
+        mkdir -p $ANDROID_HOME/cmdline-tools/latest
+        unzip -q cmdtools.zip -d $ANDROID_HOME/temp_tools
+        mv $ANDROID_HOME/temp_tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
+        rm -rf cmdtools.zip $ANDROID_HOME/temp_tools
+
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+
+        # قبول التراخيص وتثبيت الحزم المطلوبة للبناء
+        yes | sdkmanager --licenses || true
+        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+
+        # كتابة ملف local.properties لتحديد مسار الـ SDK
+        echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+        # تجميع المشروع مباشرة عبر الأداة
+        gradle assembleDebug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
