@@ -76,7 +76,7 @@ jobs:
 
         echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
 
-    - name: Setup Gradle Wrapper (Version 8.2) & Build APK
+    - name: Download Android SDK & Standalone Gradle 8.2 Build
       run: |
         export ANDROID_HOME=$HOME/android-sdk
         mkdir -p $ANDROID_HOME
@@ -94,12 +94,13 @@ jobs:
 
         echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-        # توليد ملف الwrapper بالنسخة 8.2 لتثبيت بيئة بناء نظيفة وبعيدة تماماً عن Gradle 9
-        gradle wrapper --gradle-version 8.2
+        # تحميل Gradle 8.2 كأداة مستقلة تماماً وتجنب جراجل النظام تماماً
+        wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
+        unzip -q gradle-8.2-bin.zip
+        export PATH=$PWD/gradle-8.2/bin:$PATH
 
-        # استخدام gradlew للتشغيل الفعلي وتجنب أمر النظام الإجباري
-        chmod +x gradlew
-        ./gradlew assembleDebug --no-daemon
+        # تشغيل البناء بالأداة المستقلة المعزولة
+        gradle assembleDebug --no-daemon
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
