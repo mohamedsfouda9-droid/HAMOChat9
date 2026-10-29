@@ -18,7 +18,7 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Prepare Project Structure & Files
+    - name: Prepare Project Structure & Clean Build Config
       run: |
         mkdir -p app/src/main/java/com/whatsapp/clone/stealth/
         mkdir -p app/src/main/res/values
@@ -48,6 +48,7 @@ jobs:
 
         echo "// Top-level build file" > build.gradle
 
+        # إزالة appcompat المعارضة والاعتماد حصرياً على OkHttp فقط لتجنب أي مشاكل في التبعيات
         cat << 'EOF' > app/build.gradle
         plugins {
             id 'com.android.application' version '8.2.0'
@@ -69,14 +70,13 @@ jobs:
             }
         }
         dependencies {
-            implementation 'androidx.appcompat:appcompat:1.6.1'
-            implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+            implementation 'com.squareup.okhttp3:okhttp:4.11.0'
         }
         EOF
 
         echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
 
-    - name: Download Android SDK & Isolated Gradle 8.2 Build
+    - name: Download Android SDK & Build APK
       run: |
         export ANDROID_HOME=$HOME/android-sdk
         mkdir -p $ANDROID_HOME
@@ -94,11 +94,9 @@ jobs:
 
         echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-        # تنزيل وفك ضغط Gradle 8.2 واستخدامه بالمسار المطلق حصرياً
         wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
         unzip -q gradle-8.2-bin.zip
 
-        # استدعاء النسخة الصحيحة بالمسار المباشر لمنع أي تداخل مع جراجل النظام
         ./gradle-8.2/bin/gradle assembleDebug --no-daemon
 
     - name: Upload APK Artifact
