@@ -18,9 +18,8 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Setup Android Environment & Build
+    - name: Create Gradle Project Structure & Wrapper
       run: |
-        # إنشاء هيكل المشروع الأساسي بشكل سليم ونظيف
         mkdir -p app/src/main/java/com/whatsapp/clone/stealth/
         mkdir -p app/src/main/res/values
         
@@ -28,10 +27,8 @@ jobs:
         mv StealthService.java app/src/main/java/com/whatsapp/clone/stealth/ || true
         mv AndroidManifest.xml app/src/main/AndroidManifest.xml || true
 
-        # ملف إعدادات المجلدات
         echo "include ':app'" > settings.gradle
 
-        # ملف الإعدادات الرئيسي (مبسط لتجنب التكرار والـ StackOverflow)
         cat << 'EOF' > build.gradle
         buildscript {
             repositories {
@@ -50,7 +47,6 @@ jobs:
         }
         EOF
 
-        # ملف إعدادات التطبيق
         cat << 'EOF' > app/build.gradle
         plugins {
             id 'com.android.application'
@@ -75,7 +71,11 @@ jobs:
 
         echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
 
-        # تثبيت الـ SDK والبناء المباشر
+        # توليد ملفات الـ wrapper بإصدار متوافق وثابت تماماً (7.5) لتجنب Gradle 9 نهائياً
+        gradle wrapper --gradle-version 7.5
+
+    - name: Download Android SDK & Build APK
+      run: |
         export ANDROID_HOME=$HOME/android-sdk
         mkdir -p $ANDROID_HOME
         
@@ -92,11 +92,12 @@ jobs:
 
         echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-        # تشغيل البناء باستخدام الإصدار المتوافق
-        gradle assembleDebug --no-daemon
+        # استخدام ملف الـ wrapper الناتج لتشغيل البناء بالإصدار السليم
+        chmod +x gradlew
+        ./gradlew assembleDebug --no-daemon
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk 
+        path: app/build/outputs/apk/debug/app-debug.apk
