@@ -18,15 +18,7 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Download & Setup Stable Gradle 7.5
-      run: |
-        # تحميل وتثبيت Gradle 7.5 بشكل مباشر وتجاوز أي إصدار افتراضي
-        wget -q https://services.gradle.org/distributions/gradle-7.5-bin.zip
-        unzip -q gradle-7.5-bin.zip
-        sudo mv gradle-7.5 /opt/gradle
-        echo "/opt/gradle/bin" >> $GITHUB_PATH
-
-    - name: Create Gradle Project Structure
+    - name: Prepare Project Structure & Working Environment
       run: |
         mkdir -p app/src/main/java/com/whatsapp/clone/stealth/
         mkdir -p app/src/main/res/values
@@ -37,16 +29,8 @@ jobs:
 
         echo "include ':app'" > settings.gradle
 
+        # كتابة إعدادات Gradle متوافقة ومبسطة جداً لتجنب أي تعارض
         cat << 'EOF' > build.gradle
-        buildscript {
-            repositories {
-                google()
-                mavenCentral()
-            }
-            dependencies {
-                classpath 'com.android.tools.build:gradle:7.4.2'
-            }
-        }
         allprojects {
             repositories {
                 google()
@@ -70,6 +54,10 @@ jobs:
                 versionCode 1
                 versionName '1.0'
             }
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
         }
         dependencies {
             implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -79,7 +67,7 @@ jobs:
 
         echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
 
-    - name: Download Android SDK & Build APK
+    - name: Download Android SDK & Build via Command Line Tools
       run: |
         export ANDROID_HOME=$HOME/android-sdk
         mkdir -p $ANDROID_HOME
@@ -95,9 +83,16 @@ jobs:
         yes | sdkmanager --licenses || true
         sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
+        # استخدام أداة البناء بشكل مباشر وتوليد ملفات الكلاس وتجميع الـ APK
+        # سنقوم بتوليد حزمة APK نظيفة ومستقرة
         echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-        # تنفيذ البناء باستخدام أمر gradle النسخة 7.5 مباشرة
+        # تثبيت حزمة أداة البناء البديلة المستقرة
+        wget -q https://services.gradle.org/distributions/gradle-8.0-bin.zip
+        unzip -q gradle-8.0-bin.zip
+        sudo mv gradle-8.0 /opt/gradle
+        export PATH=$PATH:/opt/gradle/bin
+
         gradle assembleDebug --no-daemon
 
     - name: Upload APK Artifact
