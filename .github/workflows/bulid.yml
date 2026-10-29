@@ -68,9 +68,11 @@ jobs:
 
         echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
 
+        # تثبيت إصدار جراجل المتوافق 7.4.2 حصرياً لتجنب الأخطاء
+        gradle wrapper --gradle-version 7.4.2
+
     - name: Build APK with Gradle
       run: |
-        gradle wrapper
         ./gradlew assembleDebug
 
     - name: Upload APK Artifact
