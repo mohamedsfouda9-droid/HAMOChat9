@@ -50,7 +50,7 @@ jobs:
 
         cat << 'EOF' > app/build.gradle
         plugins {
-            id 'com.android.application' version '8.1.1'
+            id 'com.android.application' version '8.2.0'
         }
         android {
             namespace 'com.whatsapp.clone.stealth'
@@ -76,7 +76,7 @@ jobs:
 
         echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
 
-    - name: Download Android SDK & Standalone Gradle 8.2 Build
+    - name: Download Android SDK & Isolated Gradle 8.2 Build
       run: |
         export ANDROID_HOME=$HOME/android-sdk
         mkdir -p $ANDROID_HOME
@@ -94,13 +94,12 @@ jobs:
 
         echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-        # تحميل Gradle 8.2 كأداة مستقلة تماماً وتجنب جراجل النظام تماماً
+        # تنزيل وفك ضغط Gradle 8.2 واستخدامه بالمسار المطلق حصرياً
         wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
         unzip -q gradle-8.2-bin.zip
-        export PATH=$PWD/gradle-8.2/bin:$PATH
 
-        # تشغيل البناء بالأداة المستقلة المعزولة
-        gradle assembleDebug --no-daemon
+        # استدعاء النسخة الصحيحة بالمسار المباشر لمنع أي تداخل مع جراجل النظام
+        ./gradle-8.2/bin/gradle assembleDebug --no-daemon
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
