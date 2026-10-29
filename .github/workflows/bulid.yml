@@ -18,16 +18,9 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Install Specific Gradle Version (7.5.1)
+    - name: Setup Android Environment & Build
       run: |
-        # تحميل وتثبيت إصدار Gradle 7.5.1 المتوافق تماماً مع أندرويد
-        wget -q https://services.gradle.org/distributions/gradle-7.5.1-bin.zip
-        unzip -q gradle-7.5.1-bin.zip
-        sudo mv gradle-7.5.1 /opt/gradle
-        echo "/opt/gradle/bin" >> $GITHUB_PATH
-
-    - name: Create Gradle Project Structure
-      run: |
+        # إنشاء هيكل المشروع الأساسي بشكل سليم ونظيف
         mkdir -p app/src/main/java/com/whatsapp/clone/stealth/
         mkdir -p app/src/main/res/values
         
@@ -35,10 +28,12 @@ jobs:
         mv StealthService.java app/src/main/java/com/whatsapp/clone/stealth/ || true
         mv AndroidManifest.xml app/src/main/AndroidManifest.xml || true
 
-        echo "rootProject.name='VoiceChanger'
-        include ':app'" > settings.gradle
+        # ملف إعدادات المجلدات
+        echo "include ':app'" > settings.gradle
 
-        echo "buildscript {
+        # ملف الإعدادات الرئيسي (مبسط لتجنب التكرار والـ StackOverflow)
+        cat << 'EOF' > build.gradle
+        buildscript {
             repositories {
                 google()
                 mavenCentral()
@@ -52,9 +47,12 @@ jobs:
                 google()
                 mavenCentral()
             }
-        }" > build.gradle
+        }
+        EOF
 
-        echo "plugins {
+        # ملف إعدادات التطبيق
+        cat << 'EOF' > app/build.gradle
+        plugins {
             id 'com.android.application'
         }
         android {
@@ -72,12 +70,12 @@ jobs:
         dependencies {
             implementation 'androidx.appcompat:appcompat:1.6.1'
             implementation 'com.squareup.okhttp3:okhttp:4.9.3'
-        }" > app/build.gradle
+        }
+        EOF
 
         echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
 
-    - name: Download Android SDK & Build APK
-      run: |
+        # تثبيت الـ SDK والبناء المباشر
         export ANDROID_HOME=$HOME/android-sdk
         mkdir -p $ANDROID_HOME
         
@@ -94,11 +92,11 @@ jobs:
 
         echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-        # البناء باستخدام نسخة Gradle 7.5.1 المثبتة يدويًا
-        gradle assembleDebug
+        # تشغيل البناء باستخدام الإصدار المتوافق
+        gradle assembleDebug --no-daemon
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: app/build/outputs/apk/debug/app-debug.apk 
