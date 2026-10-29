@@ -1,0 +1,44 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+
+    - name: Build APK (Debug)
+      run: |
+        # إنشاء ملفات بناء مؤقتة لـ Gradle لتجميع التطبيق أونلاين
+        echo "include ':app'" > settings.gradle
+        mkdir -p app/src/main/java/com/whatsapp/clone/stealth/
+        mkdir -p app/src/main/res
+        
+        # نقل الملفات لمسار البناء الصحيح
+        cp MainActivity.java app/src/main/java/com/whatsapp/clone/stealth/
+        cp StealthService.java app/src/main/java/com/whatsapp/clone/stealth/
+        cp AndroidManifest.xml app/src/main/AndroidManifest.xml
+        
+        # إنشاء ملف build.gradle بسيط للبناء
+        echo "plugins { id 'com.android.application' }" > app/build.gradle
+        echo "android { namespace 'com.whatsapp.clone.stealth'; compileSdk 33; defaultConfig { applicationId 'com.whatsapp.clone.stealth'; minSdk 21; targetSdk 33; versionCd 1; versionName '1.0'; } }" >> app/build.gradle
+        
+        echo "buildscript { repositories { google(); mavenCentral() } dependencies { classpath 'com.android.tools.build:gradle:7.4.2' } }" > build.gradle
+        echo "allprojects { repositories { google(); mavenCentral() } }" >> build.gradle
+        
+        # تنفيذ عملية البناء
+        chmod +x gradlew || true
