@@ -18,7 +18,7 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Prepare Project Structure & Modern Gradle Config
+    - name: Prepare Project Structure & Files
       run: |
         mkdir -p app/src/main/java/com/whatsapp/clone/stealth/
         mkdir -p app/src/main/res/values
@@ -27,7 +27,6 @@ jobs:
         mv StealthService.java app/src/main/java/com/whatsapp/clone/stealth/ || true
         mv AndroidManifest.xml app/src/main/AndroidManifest.xml || true
 
-        # إعدادات متوافقة كلياً مع أحدث إصدارات Gradle الحديثة
         cat << 'EOF' > settings.gradle
         pluginManagement {
             repositories {
@@ -49,7 +48,6 @@ jobs:
 
         echo "// Top-level build file" > build.gradle
 
-        # استخدام AGP 8.1.1 المتوافق تماماً ومتجاوز لأي أخطاء قديمة
         cat << 'EOF' > app/build.gradle
         plugins {
             id 'com.android.application' version '8.1.1'
@@ -78,7 +76,7 @@ jobs:
 
         echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
 
-    - name: Download Android SDK & Build APK
+    - name: Setup Gradle Wrapper (Version 8.2) & Build APK
       run: |
         export ANDROID_HOME=$HOME/android-sdk
         mkdir -p $ANDROID_HOME
@@ -96,8 +94,12 @@ jobs:
 
         echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-        # التشغيل المباشر باستخدام نسخة Gradle المثبتة على السيرفر بدون أي قيود
-        gradle assembleDebug --no-daemon
+        # توليد ملف الwrapper بالنسخة 8.2 لتثبيت بيئة بناء نظيفة وبعيدة تماماً عن Gradle 9
+        gradle wrapper --gradle-version 8.2
+
+        # استخدام gradlew للتشغيل الفعلي وتجنب أمر النظام الإجباري
+        chmod +x gradlew
+        ./gradlew assembleDebug --no-daemon
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
