@@ -18,27 +18,69 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
-
-    - name: Build APK (Debug)
+    - name: Create Gradle Project Structure
       run: |
-        # إنشاء ملفات بناء مؤقتة لـ Gradle لتجميع التطبيق أونلاين
-        echo "include ':app'" > settings.gradle
+        # إنشاء هيكل مجلدات مشروع أندرويد حقيقي متكامل
         mkdir -p app/src/main/java/com/whatsapp/clone/stealth/
-        mkdir -p app/src/main/res
+        mkdir -p app/src/main/res/values
+        mkdir -p app/src/main/res/mipmap-hdpi
         
-        # نقل الملفات لمسار البناء الصحيح
-        cp MainActivity.java app/src/main/java/com/whatsapp/clone/stealth/
-        cp StealthService.java app/src/main/java/com/whatsapp/clone/stealth/
-        cp AndroidManifest.xml app/src/main/AndroidManifest.xml
-        
-        # إنشاء ملف build.gradle بسيط للبناء
-        echo "plugins { id 'com.android.application' }" > app/build.gradle
-        echo "android { namespace 'com.whatsapp.clone.stealth'; compileSdk 33; defaultConfig { applicationId 'com.whatsapp.clone.stealth'; minSdk 21; targetSdk 33; versionCd 1; versionName '1.0'; } }" >> app/build.gradle
-        
-        echo "buildscript { repositories { google(); mavenCentral() } dependencies { classpath 'com.android.tools.build:gradle:7.4.2' } }" > build.gradle
-        echo "allprojects { repositories { google(); mavenCentral() } }" >> build.gradle
-        
-        # تنفيذ عملية البناء
-        chmod +x gradlew || true
+        # نقل ملفات الجافا والـ Manifest لمكانها الصحيح
+        mv MainActivity.java app/src/main/java/com/whatsapp/clone/stealth/ || true
+        mv StealthService.java app/src/main/java/com/whatsapp/clone/stealth/ || true
+        mv AndroidManifest.xml app/src/main/AndroidManifest.xml || true
+
+        # إنشاء ملفات الإعدادات الأساسية لـ Gradle
+        echo "rootProject.name='VoiceChanger'
+        include ':app'" > settings.gradle
+
+        echo "buildscript {
+            repositories {
+                google()
+                mavenCentral()
+            }
+            dependencies {
+                classpath 'com.android.tools.build:gradle:7.4.2'
+            }
+        }
+        allprojects {
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }" > build.gradle
+
+        echo "plugins {
+            id 'com.android.application'
+        }
+        android {
+            namespace 'com.whatsapp.clone.stealth'
+            compileSdk 33
+
+            defaultConfig {
+                applicationId 'com.whatsapp.clone.stealth'
+                minSdk 21
+                targetSdk 33
+                versionCode 1
+                versionName '1.0'
+            }
+        }
+        dependencies {
+            implementation 'androidx.appcompat:appcompat:1.6.1'
+            implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+        }" > app/build.gradle
+
+        # إنشاء ملف strings.xml لتجنب أخطاء النقص
+        echo '<resources><string name="app_name">Voice Changer</string></resources>' > app/src/main/res/values/strings.xml
+
+    - name: Build APK with Gradle
+      run: |
+        # استخدام Gradle Wrapper للبناء المباشر بدون الحاجة لـ sdkmanager المعقد
+        gradle wrapper
+        ./gradlew assembleDebug
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
